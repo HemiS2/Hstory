@@ -17,3 +17,9 @@ Abrir o arquivo .csproj
 <Nullable>disable</Nullable>
 
 Camada de Dados (Models)
+
+Criar contexto na pasta Data
+
+Configurar a connectionstring no arquivo appsetting.json
+
+Configurar os serviços de contexto e identidade no program.cs

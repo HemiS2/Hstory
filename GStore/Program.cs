@@ -1,9 +1,27 @@
+using GStore.Data;
+using GStore.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+string conexao = builder.Configuration.GetConnectionString("GStoreCore");
+builder.Services.AddDbContext<AppDbContext>(
+        Options => Options.UseMySQL(conexao)
+);
+
+// Serviço de Identidade do Usuario
+builder.Services.AddIdentity<Usuario, IdentityRole>(
+    options=> Options.SignIn.RequiredConfirmedEmail = false
+)
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
