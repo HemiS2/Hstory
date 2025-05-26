@@ -1,5 +1,6 @@
 using GStore.Data;
 using GStore.Models;
+using GStore.Services.EmailService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,22 +9,33 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Configuração do Serviço de Conexão com o banco de dados
+// Serviço de Conexão com o Banco de Dados
 string conexao = builder.Configuration.GetConnectionString("GStoreConn");
 builder.Services.AddDbContext<AppDbContext>(
-    opt => opt.UseMySQL(conexao)
+    options => options.UseMySQL(conexao)
 );
 
-// Configuração do Serviço de Identidade de Usuários
+// Serviço de Gestão de Usuário - Identity
 builder.Services.AddIdentity<Usuario, IdentityRole>(
-    options => options.SignIn.RequireConfirmedEmail = false
+    options => { 
+        options.SignIn.RequireConfirmedEmail = true;
+        options.User.RequireUniqueEmail = true;
+    }
 ).AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
+// Serviço de Email
+var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+builder.Services.AddSingleton(emailConfig);
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope()) {
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+// Garantir que o banco exista ao executar o projeto
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider
+        .GetRequiredService<AppDbContext>();
     await dbContext.Database.EnsureCreatedAsync();
 }
 
@@ -38,6 +50,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

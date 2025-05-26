@@ -12,7 +12,10 @@ public class HomeController : Controller
     private readonly ILogger<HomeController> _logger;
     private readonly AppDbContext _db;
 
-    public HomeController(ILogger<HomeController> logger, AppDbContext db)
+    public HomeController(
+        ILogger<HomeController> logger,
+        AppDbContext db
+    )
     {
         _logger = logger;
         _db = db;
@@ -35,18 +38,18 @@ public class HomeController : Controller
             .Include(p => p.Fotos)
             .SingleOrDefault();
         
-        List<Produto> semelhantes = _db.Produtos
-            .Where(p => p.Id != id && p.CategoriaId == produto.CategoriaId)
-            .Include(p => p.Categoria)
-            .Include(p => p.Fotos)
-            .Take(4)
-            .ToList();
-        
-        ProdutoVM produtoVM = new() {
-            Produto = produto,
-            Semelhantes = semelhantes
+        ProdutoVM produtoVM = new()
+        {
+            Produto = produto
         };
-        
+
+        produtoVM.Produtos = _db.Produtos
+            .Where(p => p.CategoriaId == produto.CategoriaId
+                && p.Id != produto.Id)
+            .Take(4)
+            .Include(p => p.Fotos)
+            .ToList();
+
         return View(produtoVM);
     }
 
